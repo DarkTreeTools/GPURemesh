@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Documentation for GPU Remesh, a GPU-accelerated isotropic triangle remeshing SOP for Houdini.">
+<link rel="canonical" href="https://darktreetools.github.io/GPURemesh/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="GPU Remesh Documentation">
+<meta property="og:description" content="GPU-accelerated isotropic triangle remeshing for Houdini, with support for UVs, normals, materials and hard edges.">
+<meta property="og:url" content="https://darktreetools.github.io/GPURemesh/">
+<meta property="og:image" content="https://darktreetools.github.io/GPURemesh/images/overview_output.png">
+<title>GPU Remesh Documentation</title>
+<style>
+/* Reference manual: sticky contents rail on wide screens, one reading column, figures as rows of viewport panels. */
+:root {
+  --bg: #f5f6f7;
+  --surface: #ffffff;
+  --fg: #1b2228;
+  --fg-muted: #56626c;
+  --rule: #d5dbe0;
+  --accent: #b34700;
+  --code-bg: #e9edf0;
+  --warn-bd: #a66900;  --warn-bg: #fbf0d9;
+  --font-body: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-head: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181c; --surface: #1b2126; --fg: #e3e7ea; --fg-muted: #9ba7b1; --rule: #2f373e;
+    --accent: #ff9a4a; --code-bg: #242b31; --warn-bd: #e0a030; --warn-bg: #2e2413;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181c; --surface: #1b2126; --fg: #e3e7ea; --fg-muted: #9ba7b1; --rule: #2f373e;
+  --accent: #ff9a4a; --code-bg: #242b31; --warn-bd: #e0a030; --warn-bg: #2e2413;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.6 var(--font-body);
+  padding-block: 2rem 4rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.page { max-width: 76rem; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem 3rem; }
+@media (min-width: 62rem) {
+  .page { grid-template-columns: 13rem minmax(0, 1fr); }
+  .toc { position: sticky; top: 1.5rem; align-self: start; max-height: calc(100vh - 3rem); overflow-y: auto; }
+}
+main { min-width: 0; max-width: 56rem; }
+img { max-width: 100%; height: auto; display: block; }
+
+/* type */
+h1, h2, h3, h4 { font-family: var(--font-head); line-height: 1.2; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.6rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.7rem; font-weight: 600; margin-top: 3rem; padding-top: 1.2rem; border-top: 2px solid var(--fg); }
+h3 { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--fg-muted); margin-top: 2.6rem; }
+h4 { font-size: 1.2rem; font-weight: 600; }
+p, ul, ol, dl, table, figure, .callout { margin: 0.8rem 0 0; }
+p, li, dd { max-width: 68ch; }
+ul, ol { padding-left: 1.4rem; }
+li + li { margin-top: 0.25rem; }
+a { color: var(--accent); text-underline-offset: 0.15em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, kbd { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 0.08em 0.35em; border-radius: 3px; }
+strong { font-weight: 650; }
+.lede { font-size: 1.15rem; color: var(--fg-muted); max-width: 60ch; }
+.eyebrow { font: 600 0.78rem/1 var(--font-head); letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
+.label { font-size: 0.8rem; color: var(--fg-muted); margin-top: 0.5rem; }
+
+/* contents */
+.toc { font-size: 0.9rem; }
+.toc p { font: 600 0.78rem/1 var(--font-head); letter-spacing: 0.09em; text-transform: uppercase; color: var(--fg-muted); margin: 0 0 0.7rem; }
+.toc ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--rule); }
+.toc ol ol { border-left: 0; padding-left: 0.8rem; font-size: 0.85rem; }
+.toc li { margin: 0; }
+.toc a { display: block; padding: 0.18rem 0 0.18rem 0.9rem; color: var(--fg); text-decoration: none; margin-left: -1px; border-left: 2px solid transparent; }
+.toc ol ol a { color: var(--fg-muted); padding-block: 0.1rem; }
+.toc a:hover { color: var(--accent); border-left-color: var(--accent); }
+@media (max-width: 61.99rem) { .toc > ol { columns: 2; column-gap: 1.5rem; } }
+@media (max-width: 30rem) { .toc > ol { columns: 1; } }
+
+/* tables */
+.tablewrap { overflow-x: auto; margin-top: 0.8rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; margin: 0; }
+th, td { text-align: left; vertical-align: top; padding: 0.45rem 0.9rem 0.45rem 0; border-bottom: 1px solid var(--rule); }
+thead th { font: 600 0.78rem/1.3 var(--font-head); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-muted); border-bottom: 2px solid var(--fg); white-space: nowrap; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.nw { white-space: nowrap; }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0 1.5rem; background: var(--surface); border: 1px solid var(--rule); padding: 0.5rem 1.1rem; max-width: 40rem; font-size: 0.93rem; }
+.facts dt, .facts dd { margin: 0; padding: 0.35rem 0; border-bottom: 1px solid var(--rule); max-width: none; }
+.facts dt { color: var(--fg-muted); }
+.facts dt:last-of-type, .facts dd:last-of-type { border-bottom: 0; }
+
+/* figures */
+figure { margin-top: 1.1rem; }
+.panels { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr)); }
+.panels.two { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+.panel { margin: 0; min-width: 0; }
+.panel img { width: 100%; border-radius: 3px; }
+.panel p { margin: 0.4rem 0 0; font-size: 0.86rem; line-height: 1.4; max-width: none; font-variant-numeric: tabular-nums; }
+.panel p b { display: block; font-family: var(--font-head); font-size: 0.92rem; }
+.panel p span { color: var(--fg-muted); }
+figcaption { margin-top: 0.6rem; font-size: 0.88rem; color: var(--fg-muted); max-width: 72ch; }
+
+/* callout */
+.callout { border: 1px solid var(--warn-bd); background: var(--warn-bg); padding: 0.7rem 1rem; max-width: 68ch; font-size: 0.95rem; }
+.callout > b:first-child { font-family: var(--font-head); letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.8rem; color: var(--warn-bd); margin-right: 0.5rem; }
+
+/* parameter entries */
+.parm { margin-top: 1.8rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+.parm > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.9rem; }
+.parm > header span { font-size: 0.86rem; color: var(--fg-muted); }
+.parm > header span b { color: var(--fg); font-weight: 600; }
+.tips { font-size: 0.95rem; }
+footer { margin-top: 3.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); font-size: 0.85rem; color: var(--fg-muted); }
+
+/* click an image of a figure to see it larger */
+figure img { cursor: zoom-in; }
+.lightbox { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; padding: 3rem 1rem 1rem; background: rgba(8, 10, 12, 0.9); cursor: zoom-out; }
+.lightbox.open { display: flex; }
+.lightbox img { width: min(92vw, 88vh); max-width: none; height: auto; border-radius: 4px; cursor: default; }
+.lightbox button { position: absolute; top: 0.7rem; right: 0.9rem; width: 2.4rem; height: 2.4rem; border: 1px solid #5b6770; border-radius: 50%; background: #1b2126; color: #e3e7ea; font: 400 1.5rem/1 var(--font-body); cursor: pointer; }
+.lightbox button:hover, .lightbox button:focus-visible { border-color: #ff9a4a; color: #ff9a4a; outline: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="toc" aria-label="Contents">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#install">Install</a></li>
+    <li><a href="#examples">Example scene</a></li>
+    <li><a href="#parameters">Parameters</a>
+      <ol>
+        <li><a href="#p-group">Group</a></li>
+        <li><a href="#p-hardedges">Hard Edges Group</a></li>
+        <li><a href="#p-seamattribs">Seam Attributes</a></li>
+        <li><a href="#p-primseams">Border Attributes</a></li>
+        <li><a href="#p-featureangle">Feature Angle</a></li>
+        <li><a href="#p-iterations">Iterations</a></li>
+        <li><a href="#p-smooth">Smoothing</a></li>
+        <li><a href="#p-rc">Collapse Rounds</a></li>
+        <li><a href="#p-targetsize">Target Size</a></li>
+        <li><a href="#p-seamtol">Seam Tolerance</a></li>
+        <li><a href="#p-ftol">Shape Tolerance</a></li>
+        <li><a href="#p-maxtris">Max Triangles</a></li>
+      </ol>
+    </li>
+    <li><a href="#performance">Performance</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header>
+  <p class="eyebrow">Dark Tree toolset · SOP · Version 1.4</p>
+  <h1>GPU Remesh</h1>
+  <p class="lede">Isotropic triangle remeshing on the GPU. Keeps UVs, normals, materials and hard edges.</p>
+  <dl class="facts">
+    <dt>Node type</dt><dd><code>darktree::gpuremesh::1.4</code></dd>
+    <dt>Tab menu</dt><dd><strong>Dark Tree &gt; GPU Remesh</strong></dd>
+    <dt>Input</dt><dd>Polygons: triangles, quads, n-gons. Normals optional.</dd>
+    <dt>Output</dt><dd>Triangles</dd>
+    <dt>Requires</dt><dd>Houdini 21.0 or 22.0, a GPU that Houdini uses for OpenCL</dd>
+  </dl>
+  <p class="label">Public (L1) · Source: the GPU Remesh 1.4 asset and its example scene, made for public release.</p>
+</header>
+
+<!-- ================================================================== -->
+<h2 id="overview">Overview</h2>
+
+<p><strong>Target Size</strong> sets the edge length of the output. The other parameters rarely need changing.</p>
+<p>500,000 triangles in 0.47&nbsp;s, against 9.7&nbsp;s for the Remesh SOP (<a href="#performance">Performance</a>).</p>
+
+<p>Kept from the input:</p>
+<ul>
+  <li>UV seams and island shapes</li>
+  <li>Hard edges, from vertex normals, an edge group or an angle</li>
+  <li>Material borders, piece borders (<code>name</code>) and open borders</li>
+  <li>All attributes, point groups and primitive groups</li>
+</ul>
+<p>Works in compiled blocks. Can remesh a <a href="#p-group">group</a> only.</p>
+
+<figure>
+  <div class="panels two">
+    <div class="panel"><img src="images/overview_input.png" width="720" height="720" alt="A raw scan of a rock, very dense, with a colour pattern on its top">
+      <p><b>Input</b><span>Raw scan, 999,994 triangles</span></p></div>
+    <div class="panel"><img src="images/overview_output.png" width="720" height="720" alt="The same rock rebuilt with even triangles; the colour pattern is still on its top">
+      <p><b>Target Size 0.025</b><span>15,838 triangles in 1.1&nbsp;s</span></p></div>
+  </div>
+  <figcaption>Example 1. The point colour (<code>Cd</code>) is kept.</figcaption>
+</figure>
+
+<p>For quads, use Quad Remesh. For a size that follows curvature, use Remesh in adaptive mode. For the lowest polygon count, use PolyReduce.</p>
+
+<!-- ================================================================== -->
+<h2 id="install">Install</h2>
+
+<ol>
+  <li>Copy <code>otls/GPU_Remesh.hda</code> to the <code>otls</code> folder of your Houdini preferences, for example <code>Documents\houdini21.0\otls</code> or <code>Documents\houdini22.0\otls</code>. Restart Houdini.</li>
+  <li><kbd>Tab</kbd> &gt; <strong>Dark Tree &gt; GPU Remesh</strong>.</li>
+  <li>Start with <strong>Target Size</strong> at 1/50 to 1/100 of the object size, then lower it.</li>
+  <li>Hard-surface model without vertex normals: set <strong>Feature Angle</strong> to about 30.</li>
+</ol>
+
+<div class="callout"><b>Caution</b> Triangles ≈ surface area ÷ (0.433 × Target Size²). Cook time and GPU memory grow with it. Above <a href="#p-maxtris">Max Triangles</a> (10 million), the node stops with an error before it uses the GPU.</div>
+
+<!-- ================================================================== -->
+<h2 id="examples">Example scene</h2>
+
+<p><code>example/GPU_Remesh_examples.hip</code> has one object per example. Display one at a time. The scene loads the asset from the <code>otls</code> folder of the package.</p>
+<div class="callout"><b>Note</b> The scene was saved with Houdini 21.0.763. Older builds may show warnings or open it incorrectly.</div>
+<div class="tablewrap"><table>
+  <thead><tr><th>Object</th><th>Shows</th></tr></thead>
+  <tbody>
+    <tr><td><code>ex0_speed_comparison</code></td><td>GPU Remesh, Labs Fast Remesh and Remesh on one model, through a Switch. Needs SideFX Labs.</td></tr>
+    <tr><td><code>ex1_scan_reduction</code></td><td>A one-million-triangle scan reduced to a light mesh. <a href="#p-rc">Collapse Rounds</a> 16.</td></tr>
+    <tr><td><code>ex2_uv_mapped_model</code></td><td>A head with UVs and four materials. <a href="#p-seamattribs">Seam Attributes</a>, <a href="#p-primseams">Border Attributes</a>.</td></tr>
+    <tr><td><code>ex3_hard_surface</code></td><td>A machined part. <a href="#p-featureangle">Feature Angle</a> and cusped normals give the same result.</td></tr>
+    <tr><td><code>ex4_cloth_panel_with_logo</code></td><td>A garment panel. The logo outline is a <a href="#p-hardedges">Hard Edges Group</a>.</td></tr>
+    <tr><td><code>ex5_fractured_pieces</code></td><td>A wall in 100 pieces. <a href="#p-group">Group</a> remeshes the breaks only.</td></tr>
+    <tr><td><code>ex6_lock_outline_pts</code></td><td>A panel outline with a point every 0.01. <a href="#p-ftol">Shape Tolerance</a> 0 keeps all of them.</td></tr>
+  </tbody>
+</table></div>
+
+<!-- ================================================================== -->
+<h2 id="parameters">Parameters</h2>
+
+<div class="tablewrap"><table>
+  <thead><tr><th>Parameter</th><th>Name</th><th>Default</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><a href="#p-group">Group</a></td><td><code>group</code></td><td>–</td><td>Primitives to remesh. Empty: all.</td></tr>
+    <tr><td><a href="#p-hardedges">Hard Edges Group</a></td><td><code>hard_edges</code></td><td>–</td><td>Edges to keep, with their points.</td></tr>
+    <tr><td><a href="#p-seamattribs">Seam Attributes</a></td><td><code>seamattribs</code></td><td class="nw"><code>uv* N</code></td><td>Vertex attributes whose seams are kept.</td></tr>
+    <tr><td><a href="#p-primseams">Border Attributes</a></td><td><code>primseams</code></td><td><code>shop_materialpath name</code></td><td>Primitive attributes whose borders are kept.</td></tr>
+    <tr><td><a href="#p-featureangle">Feature Angle</a></td><td><code>featureangle</code></td><td class="nw">0 (off)</td><td>Keeps edges sharper than this angle.</td></tr>
+    <tr><td><a href="#p-iterations">Iterations</a></td><td><code>iterations</code></td><td>10</td><td>Remeshing passes.</td></tr>
+    <tr><td><a href="#p-smooth">Smoothing</a></td><td><code>smoothing</code></td><td>0.8</td><td>Point relaxation per pass.</td></tr>
+    <tr><td><a href="#p-rc">Collapse Rounds</a></td><td><code>rc</code></td><td>10</td><td>How much one pass can decimate.</td></tr>
+    <tr><td><a href="#p-targetsize">Target Size</a></td><td><code>targetsize</code></td><td>0.02</td><td>Edge length of the output.</td></tr>
+    <tr><td><a href="#p-seamtol">Seam Tolerance</a></td><td><code>seamtol</code></td><td>0.001</td><td>Closer values count as equal.</td></tr>
+    <tr><td><a href="#p-ftol">Shape Tolerance</a></td><td><code>ftol</code></td><td>0.1</td><td>How far feature lines can move.</td></tr>
+    <tr><td><a href="#p-maxtris">Max Triangles</a></td><td><code>maxtris</code></td><td class="nw">10,000,000</td><td>Safety limit on the output size.</td></tr>
+  </tbody>
+</table></div>
+
+<!-- ------------------------------------------------------------------ -->
+<section class="parm" id="p-group">
+  <header><h4>Group</h4><code>group</code></header>
+  <p>Same field as in the Remesh SOP: group names, primitive numbers, patterns such as <code>@name=wall*</code>, or a viewport selection.</p>
+  <p>Points shared with the rest of the mesh stay in place. The neighbour polygons receive the new border points, so the mesh stays closed.</p>
+  <figure>
+    <div class="panels">
+      <div class="panel"><img src="images/group_wall.png" width="560" height="560" loading="lazy" alt="The pieces of a fractured wall, moved apart; the faces of the breaks are orange">
+        <p><b>Group <code>inside</code></b><span>The breaks, in orange.</span></p></div>
+      <div class="panel"><img src="images/group_input.png" width="560" height="560" loading="lazy" alt="Close-up of three pieces: the orange faces are made of triangles of every size">
+        <p><b>Input</b></p></div>
+      <div class="panel"><img src="images/group_output.png" width="560" height="560" loading="lazy" alt="The same close-up: the orange faces are made of small even triangles, the grey faces are unchanged">
+        <p><b>Output, Target Size 0.01</b><span>Grey faces unchanged.</span></p></div>
+    </div>
+    <figcaption>Example 5. One node remeshes the breaks of all 100 pieces.</figcaption>
+  </figure>
+</section>
+
+<section class="parm" id="p-hardedges">
+  <header><h4>Hard Edges Group</h4><code>hard_edges</code></header>
+  <p>An edge group to keep. <code>*</code> takes every edge of the input polygons, as in the Remesh SOP.</p>
+  <p>The input points of these edges are always kept, whatever the <strong>Shape Tolerance</strong>. Edges longer than <strong>Target Size</strong> are still split.</p>
+  <figure>
+    <div class="panels">
+      <div class="panel"><img src="images/hardedge_input.png" width="560" height="560" loading="lazy" alt="Close-up of the first two letters of the logo; their outline, the edge group abseams, is a thin orange line">
+        <p><b>Input</b><span><code>abseams</code> in orange, made by the Boolean.</span></p></div>
+      <div class="panel"><img src="images/hardedge_on.png" width="560" height="560" loading="lazy" alt="Close-up of the first two letters of the logo: their outline is a clean line of triangle edges">
+        <p><b><code>abseams</code></b><span>Clean outline.</span></p></div>
+      <div class="panel"><img src="images/hardedge_off.png" width="560" height="560" loading="lazy" alt="The same close-up: the outline of the letters is a sawtooth line">
+        <p><b>Empty</b><span>Triangles cross the outline.</span></p></div>
+    </div>
+    <figcaption>Example 4, Target Size 0.003. The panel is flat: only an edge group can hold the outline.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Use it for lines that no attribute and no angle can find, or when <strong>Feature Angle</strong> takes too many or too few edges.</li>
+  </ul>
+</section>
+
+<section class="parm" id="p-seamattribs">
+  <header><h4>Seam Attributes</h4><code>seamattribs</code></header>
+  <p>Vertex attributes whose seams are kept. The default, <code>uv* N</code>, keeps the UV island outlines and the cusps of the normals.</p>
+  <figure>
+    <div class="panels">
+      <div class="panel"><img src="images/seams_input.png" width="560" height="560" loading="lazy" alt="The ear of a head with a checker texture and orange lines along the UV seams">
+        <p><b>Input</b><span>UV seams in orange.</span></p></div>
+      <div class="panel"><img src="images/seams_on.png" width="560" height="560" loading="lazy" alt="Remeshed head with a clean checker texture">
+        <p><b><code>uv* N</code> (default)</b><span>Checker intact.</span></p></div>
+      <div class="panel"><img src="images/seams_off.png" width="560" height="560" loading="lazy" alt="Remeshed head with a band of smeared texture along the former seams">
+        <p><b>Empty</b><span>Smeared along the seams.</span></p></div>
+    </div>
+    <figcaption>Example 2, Target Size 0.002.</figcaption>
+  </figure>
+  <figure>
+    <div class="panels">
+      <div class="panel"><img src="images/normals_input.png" width="560" height="560" loading="lazy" alt="A machined bracket made of large polygons, with hard shading on its edges">
+        <p><b>Input</b><span>Cusped vertex normals.</span></p></div>
+      <div class="panel"><img src="images/normals_on.png" width="560" height="560" loading="lazy" alt="The remeshed bracket with the same crisp shading">
+        <p><b><code>N</code></b><span>Same shading.</span></p></div>
+      <div class="panel"><img src="images/normals_off.png" width="560" height="560" loading="lazy" alt="The remeshed bracket with ragged shading along every hard edge">
+        <p><b>Empty</b><span>Ragged hard edges.</span></p></div>
+    </div>
+    <figcaption>Example 3, shaded with <code>N</code>.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Add attributes with sharp borders, for example <code>uv* N Cd</code> for a vertex colour painted per face.</li>
+    <li>Remove <code>N</code> if the normals are faceted: every edge would be a seam.</li>
+    <li>Hard edges need vertex normals. Point normals have no seams.</li>
+  </ul>
+</section>
+
+<section class="parm" id="p-primseams">
+  <header><h4>Border Attributes</h4><code>primseams</code></header>
+  <p>Primitive attributes whose borders are kept. The default keeps the borders between materials and between named pieces.</p>
+  <figure>
+    <div class="panels">
+      <div class="panel"><img src="images/borders_input.png" width="560" height="560" loading="lazy" alt="Face of the head model with one colour per material and orange lines on their borders">
+        <p><b>Input</b><span>Material borders in orange.</span></p></div>
+      <div class="panel"><img src="images/borders_on.png" width="560" height="560" loading="lazy" alt="Remeshed face: the outline of the lips is a clean line">
+        <p><b>Default</b><span>Clean borders.</span></p></div>
+      <div class="panel"><img src="images/borders_off.png" width="560" height="560" loading="lazy" alt="Remeshed face: the outline of the lips and of the eyes is a sawtooth line">
+        <p><b>Empty</b><span>Jagged borders.</span></p></div>
+    </div>
+    <figcaption>Example 2, one colour per <code>shop_materialpath</code>.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Add any zone or cluster ID. Remove attributes whose borders do not matter: the triangles get more regular.</li>
+  </ul>
+</section>
+
+<section class="parm" id="p-featureangle">
+  <header><h4>Feature Angle</h4><code>featureangle</code></header>
+  <p>Keeps the edges where the surface turns by more than this angle. 0 turns it off. For hard-surface models without vertex normals.</p>
+  <p>At 0, edges near 90° already hold, but chamfers do not.</p>
+  <figure>
+    <div class="panels two">
+      <div class="panel"><img src="images/anglez_000.png" width="560" height="560" loading="lazy" alt="Close-up of the holes and of the chamfer: the edge of the chamfer is a ragged line">
+        <p><b>0</b><span>The 45° chamfer, bottom right, is ragged.</span></p></div>
+      <div class="panel"><img src="images/anglez_030.png" width="560" height="560" loading="lazy" alt="The same close-up: every sharp edge is a clean line">
+        <p><b>30</b><span>Every edge above 30° is clean.</span></p></div>
+    </div>
+    <figcaption>Example 3 without normals, Target Size 0.02. Orange: output edges above 30°.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Stay above the facet angle of the round parts. A 48-sided cylinder has 7.5° between facets.</li>
+    <li>Below about 20°, organic or noisy surfaces keep their input edges.</li>
+    <li>Leave it at 0 if the input has cusped vertex normals.</li>
+  </ul>
+</section>
+
+<!-- ------------------------------------------------------------------ -->
+<h3 id="meshing">Meshing</h3>
+
+<section class="parm" id="p-iterations">
+  <header><h4>Iterations</h4><code>iterations</code></header>
+  <p>Remeshing passes. 10 suits most inputs.</p>
+  <figure>
+    <div class="panels">
+      <div class="panel"><img src="images/iterations_01.png" width="560" height="560" loading="lazy" alt="The rock still covered with very small triangles">
+        <p><b>1</b><span>447,246 triangles</span></p></div>
+      <div class="panel"><img src="images/iterations_03.png" width="560" height="560" loading="lazy" alt="Smaller triangles than the target, of uneven size">
+        <p><b>3</b><span>87,266 triangles</span></p></div>
+      <div class="panel"><img src="images/iterations_10.png" width="560" height="560" loading="lazy" alt="Regular, nearly equilateral triangles">
+        <p><b>10 (default)</b><span>15,838 triangles</span></p></div>
+    </div>
+    <figcaption>Example 1, Target Size 0.025. A dense input needs several passes to reach Target Size.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Fewer passes save little: 0.15&nbsp;s at 3, 0.17&nbsp;s at 10 on example 0.</li>
+    <li>Uneven triangles left on a dense input: raise <strong>Collapse Rounds</strong> first.</li>
+  </ul>
+</section>
+
+<section class="parm" id="p-smooth">
+  <header><h4>Smoothing</h4><code>smoothing</code></header>
+  <p>Point relaxation per pass. 0: none. 1: each point moves to the centre of its neighbours. The points stay on the input surface, so the shape does not shrink.</p>
+  <figure>
+    <div class="panels two">
+      <div class="panel"><img src="images/smoothing_000.png" width="560" height="560" loading="lazy" alt="Triangles of the right density but irregular shape">
+        <p><b>0</b><span>16,304 triangles, irregular</span></p></div>
+      <div class="panel"><img src="images/smoothing_080.png" width="560" height="560" loading="lazy" alt="Regular triangles">
+        <p><b>0.8 (default)</b><span>15,838 triangles</span></p></div>
+    </div>
+    <figcaption>Example 1.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Keep the default.</li>
+  </ul>
+</section>
+
+<section class="parm" id="p-rc">
+  <header><h4>Collapse Rounds</h4><code>rc</code></header>
+  <p>How much one pass can decimate. Raise it when a very dense input keeps patches of small triangles.</p>
+  <figure>
+    <div class="panels two">
+      <div class="panel"><img src="images/rc_10.png" width="560" height="560" loading="lazy" alt="Triangles of uneven size on the rock">
+        <p><b>10 (default)</b><span>5,646 triangles, uneven</span></p></div>
+      <div class="panel"><img src="images/rc_16.png" width="560" height="560" loading="lazy" alt="Even triangles on the rock">
+        <p><b>16</b><span>3,990 triangles, even</span></p></div>
+    </div>
+    <figcaption>Example 1 at Target Size 0.05: one million triangles reduced 250 times.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Use 16 when the output has more than 50 times fewer triangles than the input. 32 does no better.</li>
+  </ul>
+</section>
+
+<!-- ------------------------------------------------------------------ -->
+<h3 id="sizing">Element Sizing</h3>
+
+<section class="parm" id="p-targetsize">
+  <header><h4>Target Size</h4><code>targetsize</code></header>
+  <p>Edge length of the output. Sets the density, the cook time and the GPU memory.</p>
+  <figure>
+    <div class="panels">
+      <div class="panel"><img src="images/targetsize_050.png" width="560" height="560" loading="lazy" alt="Close-up of the rock with large triangles">
+        <p><b>0.05</b><span>3,990 triangles</span></p></div>
+      <div class="panel"><img src="images/targetsize_025.png" width="560" height="560" loading="lazy" alt="The same close-up with medium triangles">
+        <p><b>0.025</b><span>15,838 triangles</span></p></div>
+      <div class="panel"><img src="images/targetsize_0125.png" width="560" height="560" loading="lazy" alt="The same close-up with small triangles">
+        <p><b>0.0125</b><span>64,142 triangles</span></p></div>
+    </div>
+    <figcaption>Example 1. Half the size gives four times the triangles.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Below the edge length of the input, you get more triangles but no more detail.</li>
+    <li>A 1-unit cube at 0.001 asks for 14 million triangles, above <strong>Max Triangles</strong>.</li>
+  </ul>
+</section>
+
+<!-- ------------------------------------------------------------------ -->
+<h3 id="tolerances">Tolerances</h3>
+
+<section class="parm" id="p-seamtol">
+  <header><h4>Seam Tolerance</h4><code>seamtol</code></header>
+  <p>Attribute values closer than this count as equal. Raise it when noise in an attribute makes false seams.</p>
+  <figure>
+    <div class="panels two">
+      <div class="panel"><img src="images/seamtol_001.png" width="560" height="560" loading="lazy" alt="Close-up of an eye and the nose: the quad pattern of the input is still visible in the triangles">
+        <p><b>0.001 (default)</b><span>112,239 triangles. The input edges show.</span></p></div>
+      <div class="panel"><img src="images/seamtol_020.png" width="560" height="560" loading="lazy" alt="The same close-up with even triangles">
+        <p><b>0.02</b><span>107,310 triangles. Even.</span></p></div>
+    </div>
+    <figcaption>Example 2 with slightly noisy normals, as after a low-precision export.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Lower it if a real seam has nearly the same values on both sides.</li>
+  </ul>
+</section>
+
+<section class="parm" id="p-ftol">
+  <header><h4>Shape Tolerance</h4><code>ftol</code></header>
+  <p>How far feature lines (seams, borders, angle edges) can move to space their points evenly. It does not apply to the <strong>Hard Edges Group</strong>.</p>
+  <p>At 0, every input point of these lines is kept, as in the Remesh SOP. The triangles between them are chosen as by Divide with <strong>Avoid Small Angles</strong>.</p>
+  <figure>
+    <div class="panels">
+      <div class="panel"><img src="images/ftol_000.png" width="560" height="560" loading="lazy" alt="Top of the panel: the outline is exact and small triangles crowd along the neckline">
+        <p><b>0</b><span>1,234 triangles. Every outline point kept.</span></p></div>
+      <div class="panel"><img src="images/ftol_010.png" width="560" height="560" loading="lazy" alt="Top of the panel: the outline follows the input closely with regular triangles">
+        <p><b>0.1 (default)</b><span>769 triangles</span></p></div>
+      <div class="panel"><img src="images/ftol_100.png" width="560" height="560" loading="lazy" alt="Top of the panel: the corners of the shoulders are cut and the neckline is a coarse polygon">
+        <p><b>1</b><span>756 triangles. Corners cut.</span></p></div>
+    </div>
+    <figcaption>Example 6, Target Size 0.03. The input outline has a point every 0.01. White: input outline. Orange: output outline.</figcaption>
+  </figure>
+  <ul class="tips">
+    <li>Raise it to about 0.3 if small triangles line the seams.</li>
+    <li>Lower it for outlines that must match exactly.</li>
+  </ul>
+</section>
+
+<section class="parm" id="p-maxtris">
+  <header><h4>Max Triangles</h4><code>maxtris</code></header>
+  <p>Safety limit. The node estimates the output from the surface area and <strong>Target Size</strong>. Above the limit, it stops with an error before it uses GPU memory.</p>
+  <ul class="tips">
+    <li>Count about 0.5&nbsp;GB of GPU memory per million triangles. The default needs about 5&nbsp;GB.</li>
+    <li>Lower it on a smaller card, or when another application uses the GPU.</li>
+    <li>25 million input triangles reach the default at any <strong>Target Size</strong>.</li>
+  </ul>
+</section>
+
+<!-- ================================================================== -->
+<h2 id="performance">Performance</h2>
+
+<div class="tablewrap"><table>
+  <thead><tr><th class="n">Output triangles</th><th class="n">GPU Remesh</th><th class="n">Labs Fast Remesh</th><th class="n">Remesh</th></tr></thead>
+  <tbody>
+    <tr><td class="n">12,000</td><td class="n"><strong>0.05 s</strong></td><td class="n">0.14 s</td><td class="n">0.13 s</td></tr>
+    <tr><td class="n">75,000</td><td class="n"><strong>0.09 s</strong></td><td class="n">0.41 s</td><td class="n">0.96 s</td></tr>
+    <tr><td class="n">500,000</td><td class="n"><strong>0.47 s</strong></td><td class="n">1.9 s</td><td class="n">9.7 s</td></tr>
+    <tr><td class="n">3 million</td><td class="n"><strong>3.1 s</strong></td><td class="n">8.8 s</td><td class="n">57 s</td></tr>
+    <tr><td class="n">12 million</td><td class="n"><strong>14 s</strong></td><td class="n">34 s</td><td class="n">4 min 46 s</td></tr>
+  </tbody>
+</table></div>
+
+<ul>
+  <li>Template Head (5,292 quads), NVIDIA GeForce RTX 5070, AMD Threadripper PRO 5945WX. Median of 3 to 7 cooks.</li>
+  <li>GPU Remesh and Remesh at their defaults. Labs Fast Remesh with the Remesh settings (2 iterations, smoothing 0.1) and <strong>Target Bucket Size</strong> 55.</li>
+  <li>The 12 million row needs <strong>Max Triangles</strong> above 13 million.</li>
+  <li>The first cook of a session compiles the OpenCL program.</li>
+  <li>Many pieces: wire them all into one node. A loop that cooks one piece at a time pays a fixed cost per piece.</li>
+  <li>Example 0 runs the comparison on your machine.</li>
+</ul>
+
+<!-- ================================================================== -->
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<div class="tablewrap"><table>
+  <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>Texture smeared along the UV seams, or ragged hard edges.</td><td>Restore <strong>Seam Attributes</strong> to <code>uv* N</code>. Hard edges need vertex normals.</td></tr>
+    <tr><td>Ragged or rounded chamfers.</td><td><strong>Feature Angle</strong> about 30, or a <strong>Hard Edges Group</strong>.</td></tr>
+    <tr><td>The input edges show in the output.</td><td>Too many edges are kept. Raise <strong>Feature Angle</strong> or set it to 0, remove <code>N</code> if the normals are faceted, or raise <strong>Seam Tolerance</strong>.</td></tr>
+    <tr><td>Small triangles along the seams or borders.</td><td><strong>Shape Tolerance</strong> about 0.3.</td></tr>
+    <tr><td>Jagged border between two materials.</td><td>Add the attribute to <strong>Border Attributes</strong>.</td></tr>
+    <tr><td>Patches of small triangles after a large reduction.</td><td><strong>Collapse Rounds</strong> 16.</td></tr>
+    <tr><td>Warning “'…' is not a valid group”.</td><td>Correct or clear <strong>Group</strong>.</td></tr>
+    <tr><td>Empty output, warning “The input has no polygon to remesh”.</td><td>Unpack or convert the input to polygons.</td></tr>
+    <tr><td>Error “This remesh needs room for about … triangles”.</td><td>Raise <strong>Target Size</strong>, or <strong>Max Triangles</strong> if the GPU has the memory.</td></tr>
+    <tr><td>Very long cook, or an OpenCL error.</td><td>The job is too large for the GPU. Raise <strong>Target Size</strong>, lower <strong>Max Triangles</strong>, close other GPU applications.</td></tr>
+    <tr><td>Slow on many small pieces.</td><td>One node for all the pieces, outside any loop.</td></tr>
+  </tbody>
+</table></div>
+
+<!-- ================================================================== -->
+<footer>GPU Remesh 1.4 · Dark Tree toolset · Houdini is a trademark of Side Effects Software Inc.</footer>
+
+</main>
+</div>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Enlarged image">
+  <button type="button" aria-label="Close">&times;</button>
+  <img alt="">
+</div>
+<script>
+(function () {
+  var box = document.getElementById("lightbox"), big = box.querySelector("img"), last = null;
+  function close() { box.classList.remove("open"); big.removeAttribute("src"); if (last) { last.focus(); } }
+  document.querySelectorAll("figure img").forEach(function (img) {
+    img.tabIndex = 0;
+    img.title = "Click to enlarge";
+    function open() { last = img; big.src = img.currentSrc || img.src; big.alt = img.alt; box.classList.add("open"); box.querySelector("button").focus(); }
+    img.addEventListener("click", open);
+    img.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  });
+  box.addEventListener("click", function (e) { if (e.target !== big) { close(); } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && box.classList.contains("open")) { close(); } });
+})();
+</script>
+</body>
+</html>
