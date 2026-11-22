@@ -20,6 +20,7 @@
   --fg-muted: #56626c;
   --rule: #d5dbe0;
   --accent: #b34700;
+  --accent-contrast: #ffffff;
   --code-bg: #e9edf0;
   --warn-bd: #a66900;  --warn-bg: #fbf0d9;
   --font-body: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
@@ -29,13 +30,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #14181c; --surface: #1b2126; --fg: #e3e7ea; --fg-muted: #9ba7b1; --rule: #2f373e;
-    --accent: #ff9a4a; --code-bg: #242b31; --warn-bd: #e0a030; --warn-bg: #2e2413;
+    --accent: #ff9a4a; --accent-contrast: #17120e; --code-bg: #242b31; --warn-bd: #e0a030; --warn-bg: #2e2413;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #14181c; --surface: #1b2126; --fg: #e3e7ea; --fg-muted: #9ba7b1; --rule: #2f373e;
-  --accent: #ff9a4a; --code-bg: #242b31; --warn-bd: #e0a030; --warn-bg: #2e2413;
+  --accent: #ff9a4a; --accent-contrast: #17120e; --code-bg: #242b31; --warn-bd: #e0a030; --warn-bg: #2e2413;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -73,6 +74,10 @@ strong { font-weight: 650; }
 .lede { font-size: 1.15rem; color: var(--fg-muted); max-width: 60ch; }
 .eyebrow { font: 600 0.78rem/1 var(--font-head); letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
 .label { font-size: 0.8rem; color: var(--fg-muted); margin-top: 0.5rem; }
+.actions { margin-top: 1.1rem; }
+.buy-button { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0.55rem 1rem; border-radius: 3px; background: var(--accent); color: var(--accent-contrast); font-weight: 700; text-decoration: none; }
+.buy-button:hover { filter: brightness(0.92); }
+.buy-button:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
 
 /* contents */
 .toc { font-size: 0.9rem; }
@@ -166,6 +171,7 @@ figure img { cursor: zoom-in; }
   <p class="eyebrow">Dark Tree toolset · SOP · Version 1.4</p>
   <h1>GPU Remesh</h1>
   <p class="lede">Isotropic triangle remeshing on the GPU. Keeps UVs, normals, materials and hard edges.</p>
+  <p class="actions"><a class="buy-button" href="https://darktreetools.gumroad.com/l/gpuremesh" target="_blank" rel="noopener" aria-label="Buy GPU Remesh on Gumroad (opens in a new tab)">Buy GPU Remesh on Gumroad</a></p>
   <dl class="facts">
     <dt>Node type</dt><dd><code>darktree::gpuremesh::1.4</code></dd>
     <dt>Tab menu</dt><dd><strong>Dark Tree &gt; GPU Remesh</strong></dd>
